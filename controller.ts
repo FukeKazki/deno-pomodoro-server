@@ -9,15 +9,16 @@ const getTest = ({ response }: {
   response.body = 'hello world'
 }
 
-const createRoom = ({ response }: {
+const createRoom = ({ params, response }: {
+  params: { pin: string, workingTime: string, restTime: string },
   response: any
 }) => {
   const pin = generatePIN()
   const room = {
     pin,
-    workingTime: 1500,
-    restTime: 300,
-    nowWorkingTime: 1500,
+    workingTime: params.workingTime,
+    restTime: params.restTime,
+    nowWorkingTime: params.workingTime,
     nowRestTime: -1,
     createdAt: Date.now()
   }

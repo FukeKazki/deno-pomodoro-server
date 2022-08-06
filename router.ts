@@ -5,7 +5,7 @@ const router = new Router()
 
 router
   .get('/', getTest)
-  .get('/create', createRoom)
+  .get('/create/:workingTime/:restTime', createRoom)
   .get('/rooms', getRoomList)
   .get('/check/:pin', checkTime)
   .get('/delete', deleteRoom)
