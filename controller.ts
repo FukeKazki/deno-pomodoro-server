@@ -15,10 +15,10 @@ const createRoom = ({ response }: {
   const pin = generatePIN()
   const room = {
     pin,
-    workingTime: 25,
-    restTime: 5,
-    intervalTime: 15,
-    intervalCount: 5,
+    workingTime: 1500,
+    restTime: 300,
+    nowWorkingTime: 1500,
+    nowRestTime: -1,
     createdAt: Date.now()
   }
   roomList.set(pin, room)
@@ -39,7 +39,6 @@ const joinRoom = ({ params, response }: {
   params: { pin: string },
   response: any
 }) => {
-  console.log(params)
   const room = roomList.get(params.pin)
   if (room) {
     response.status = 200
@@ -52,8 +51,35 @@ const joinRoom = ({ params, response }: {
 
 const createTask = () => { }
 
-// 補正用のAPI
-// 現在時刻とcreatedAtの差分を返す
-const checkTime = () => { }
+const checkTime = ({ params, response }: {
+  params: { pin: string },
+  response: any
+}) => {
+  const room = roomList.get(params.pin)
+  if (room) {
+    response.status = 200
+    response.body = room
+  } else {
+    response.status = 404
+    response.body = { message: `Roomが閉じました。` }
+  }
+}
 
-export { getTest, getRoomList, checkTime, createRoom, deleteRoom, joinRoom, createTask }
+const masterTime = ({ params, response }: {
+  params: { pin: string, workingTime: string, restTime: string },
+  response: any
+}) => {
+  const room = roomList.get(params.pin)
+  room.nowWorkingTime = Number(params.workingTime)
+  room.nowRestTime = Number(params.restTime)
+  roomList.set(params.pin, room)
+  if (room) {
+    response.status = 200
+    response.body = room
+  } else {
+    response.status = 404
+    response.body = { message: `Roomが閉じました。` }
+  }
+}
+
+export { getTest, getRoomList, checkTime, createRoom, deleteRoom, joinRoom, createTask, masterTime }
