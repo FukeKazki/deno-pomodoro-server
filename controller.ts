@@ -34,7 +34,13 @@ const getRoomList = ({ response }: {
 }
 
 
-const deleteRoom = () => { }
+const deleteRoom = ({ params, response }: {
+  params: { pin: string },
+  response: any
+}) => {
+  roomList.delete(params.pin)
+  response.status = 200
+}
 
 const joinRoom = ({ params, response }: {
   params: { pin: string },

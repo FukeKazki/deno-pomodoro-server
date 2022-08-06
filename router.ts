@@ -8,7 +8,7 @@ router
   .get('/create/:workingTime/:restTime', createRoom)
   .get('/rooms', getRoomList)
   .get('/check/:pin', checkTime)
-  .get('/delete', deleteRoom)
+  .get('/delete/:pin', deleteRoom)
   .get('/join/:pin', joinRoom)
   .get('/master/:pin/:workingTime/:restTime', masterTime)
 
