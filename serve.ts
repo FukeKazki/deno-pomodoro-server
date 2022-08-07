@@ -47,28 +47,44 @@ wss.on("error", (err: unknown) => {
 })
 
 const switchMessage = async (message: string, ws: WebSocketClient, wss: WebSocketServer) => {
-  if (message.includes("[create]")) {
+  if (message.includes("create")) {
+    const res = JSON.parse(message)
     const pid = generatePIN()
-    roomList.set(pid, {
+    const workTime = res?.workingTime ?? 2500
+    const restTime = res?.restTime ?? 300
+    const room = {
       clients: [ws],
-      workTime: 2500
-    })
-    return ws.send(`{"pid": ${pid}}`)
+      workTime: workTime,
+      restTime: restTime
+    }
+    console.log(room)
+    roomList.set(pid, room)
+    return ws.send(`{"message": "create","pid": ${pid}}`)
   }
-  if (message.includes("[join]")) {
-    // がんばってpidを抽出
-    const pid = ""
+  if (message.includes("join")) {
+    const res = JSON.parse(message)
+    const pid = res.pid
     const room = roomList.get(pid)
     room.clients.push(ws)
     roomList.set(pid, room)
     return;
   }
-  if (message.includes("[delete]")) {
+  if (message.includes("delete")) {
+    const res = JSON.parse(message)
     // がんばってpidを抽出
     const pid = ""
     const room = roomList.get(pid)
     // ルーム内のソケットを閉じる
     await Promise.all(room.clients.map((client: WebSocketClient) => client.close(0)))
+  }
+  if (message.includes("sync")) {
+    const res = JSON.parse(message)
+    const pid = res.pid.toString()
+    console.log(pid)
+    const room = roomList.get(pid)
+    console.log(room)
+
+    await Promise.all(room.clients.map((client: WebSocketClient) => client.send(message)))
   }
 }
 
@@ -78,19 +94,8 @@ const switchMessage = async (message: string, ws: WebSocketClient, wss: WebSocke
 //   await Promise.all(clients)
 // }
 
-const createMessage = `[create] {"work":2500,"rest":300}`
-const joinMessage = `[join] {"pid":40000}`
-const deleteMessage = `[delete] {"pid":30000}` // bloadcastでクローズする
+const createMessage = `{"message": "create","work":2500,"rest":300}`
+const joinMessage = `{"message": "jojn","pid":40000}`
+const deleteMessage = `{"message": "delete","pid":30000}` // bloadcastでクローズする
 const leaveMessage = ``
-
-// 1秒ごとに送信し続ける
-setInterval(() => {
-  if (roomList.size === 0) return;
-  roomList.forEach(room => {
-    room.clients.map((client: WebSocketClient) => client.send(room.workTime.toString()))
-    roomList.set(room.pid, {
-      ...room,
-      workTime: room.workTime - 1
-    })
-  })
-}, 1000)
+const syncMessage = `{"message":"sync","pid":222222,"work":2445,"rest":-1}`
