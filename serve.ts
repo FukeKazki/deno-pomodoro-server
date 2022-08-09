@@ -12,12 +12,20 @@
 // app.use(router.allowedMethods())
 
 // await app.listen({ port: 8000 });
-import { bgBlue, red, bold } from "https://deno.land/std@0.151.0/fmt/colors.ts";
+import { red, blue, yellow } from "https://deno.land/std@0.151.0/fmt/colors.ts";
 import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
 import { generatePIN } from "./util.ts"
+
+console.info = (...data: any[]) => console.log(blue("[INFO] ") + data)
+
+console.warn = (...data: any[]) => console.log(yellow("[WARN] ") + data)
+
+console.error = (...data: any[]) => console.log(red("[WARN] ") + data)
+
+
 const wss = new WebSocketServer(8080);
 const roomList = new Map()
-console.log(red(bold("hello")))
+console.info("infomation")
 wss.on("connection", (ws: WebSocketClient, url: string) => {
   ws.on("message", function (message: string) {
     console.info("[Client] message")
