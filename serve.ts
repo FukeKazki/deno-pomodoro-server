@@ -12,87 +12,97 @@
 // app.use(router.allowedMethods())
 
 // await app.listen({ port: 8000 });
-import { red, blue, yellow } from "https://deno.land/std@0.151.0/fmt/colors.ts";
-import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
-import { generatePIN } from "./util.ts"
+import { blue, red, yellow } from "./deps.ts";
+import {
+  WebSocketClient,
+  WebSocketServer,
+} from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import { generatePIN } from "./util.ts";
 
-console.info = (...data: any[]) => console.log(blue("[INFO] ") + data)
+console.info = (...data: unknown[]) => console.log(blue("[INFO] ") + data);
 
-console.warn = (...data: any[]) => console.log(yellow("[WARN] ") + data)
+console.warn = (...data: unknown[]) => console.log(yellow("[WARN] ") + data);
 
-console.error = (...data: any[]) => console.log(red("[WARN] ") + data)
-
+console.error = (...data: unknown[]) => console.log(red("[WARN] ") + data);
 
 const wss = new WebSocketServer(8080);
-const roomList = new Map()
-console.info("infomation")
+const roomList = new Map();
+console.info("infomation");
 wss.on("connection", (ws: WebSocketClient, url: string) => {
   ws.on("message", function (message: string) {
-    console.info("[Client] message")
+    console.info("[Client] message");
     switchMessage(message, ws, wss);
   });
   ws.on("open", () => {
-    console.info("[Client] oepn")
-  })
+    console.info("[Client] oepn");
+  });
   ws.on("close", () => {
-    console.info("[Client] close")
-  })
+    console.info("[Client] close");
+  });
   ws.on("error", () => {
-    console.info("[Client] error")
-  })
+    console.info("[Client] error");
+  });
   ws.on("ping", () => {
-    console.info("[Client] ping")
-  })
+    console.info("[Client] ping");
+  });
   ws.on("pong", () => {
-    console.info("[Client] pong")
-  })
+    console.info("[Client] pong");
+  });
 });
 
 wss.on("error", (err: unknown) => {
-  console.info("[Server] error")
-})
+  console.error("Server error");
+});
 
-const switchMessage = async (message: string, ws: WebSocketClient, wss: WebSocketServer) => {
+const switchMessage = async (
+  message: string,
+  ws: WebSocketClient,
+  wss: WebSocketServer,
+) => {
   if (message.includes("create")) {
-    const res = JSON.parse(message)
-    const pid = generatePIN()
-    const workTime = res?.workingTime ?? 2500
-    const restTime = res?.restTime ?? 300
+    const res = JSON.parse(message);
+    const pid = generatePIN();
+    const workTime = res?.workingTime ?? 2500;
+    const restTime = res?.restTime ?? 300;
     const room = {
       clients: [ws],
       workTime: workTime,
-      restTime: restTime
-    }
-    console.log(room)
-    roomList.set(pid, room)
-    return ws.send(`{"message": "create","pid": ${pid}}`)
+      restTime: restTime,
+    };
+    roomList.set(pid, room);
+    console.info(`Create ${pid}`);
+    return ws.send(`{"message": "create","pid": ${pid}}`);
   }
   if (message.includes("join")) {
-    const res = JSON.parse(message)
-    const pid = res.pid
-    const room = roomList.get(pid)
-    room.clients.push(ws)
-    roomList.set(pid, room)
+    const res = JSON.parse(message);
+    const pid = res.pid;
+    const room = roomList.get(pid);
+    room.clients.push(ws);
+    roomList.set(pid, room);
+    console.info(`JOIN ${pid}`);
     return;
   }
   if (message.includes("delete")) {
-    const res = JSON.parse(message)
-    // がんばってpidを抽出
-    const pid = ""
-    const room = roomList.get(pid)
-    // ルーム内のソケットを閉じる
-    await Promise.all(room.clients.map((client: WebSocketClient) => client.close(0)))
+    const res = JSON.parse(message);
+    const pid = res.pid;
+    const room = roomList.get(pid);
+
+    console.info(`Close ${pid}`);
+    await Promise.all(
+      room.clients.map((client: WebSocketClient) => client.close(0)),
+    );
   }
   if (message.includes("sync")) {
-    const res = JSON.parse(message)
-    const pid = res.pid.toString()
-    console.log(pid)
-    const room = roomList.get(pid)
-    console.log(room)
+    const res = JSON.parse(message);
+    const pid = res.pid.toString();
+    const room = roomList.get(pid);
 
-    await Promise.all(room.clients.map((client: WebSocketClient) => client.send(message)))
+    console.info(`Broadcast ${pid}`);
+    await Promise.all(
+      room.clients.map((client: WebSocketClient) => client.send(message)),
+    );
   }
-}
+};
 
 // const broadcast = async (wss: WebSocketServer, message: string) => {
 //   const clients: Promise<void>[] = []
@@ -100,8 +110,8 @@ const switchMessage = async (message: string, ws: WebSocketClient, wss: WebSocke
 //   await Promise.all(clients)
 // }
 
-const createMessage = `{"message": "create","work":2500,"rest":300}`
-const joinMessage = `{"message": "jojn","pid":40000}`
-const deleteMessage = `{"message": "delete","pid":30000}` // bloadcastでクローズする
-const leaveMessage = ``
-const syncMessage = `{"message":"sync","pid":222222,"work":2445,"rest":-1}`
+const createMessage = `{"message": "create","work":2500,"rest":300}`;
+const joinMessage = `{"message": "jojn","pid":40000}`;
+const deleteMessage = `{"message": "delete","pid":30000}`; // bloadcastでクローズする
+const leaveMessage = ``;
+const syncMessage = `{"message":"sync","pid":222222,"work":2445,"rest":-1}`;
